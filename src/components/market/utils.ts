@@ -145,3 +145,29 @@ export const getEventBadgeVariant = (type: string): 'default' | 'outline' | 'des
   if (type === 'OVERBOUGHT') return 'destructive';
   return 'secondary';
 };
+
+export const generatePriceForecast = (candles: Candle[], forecastLength: number = 5): number[] => {
+  const recentPrices = candles.slice(-10).map(c => c.close);
+  const lastPrice = recentPrices[recentPrices.length - 1];
+  
+  const priceChanges = recentPrices.slice(1).map((price, i) => price - recentPrices[i]);
+  const avgChange = priceChanges.reduce((a, b) => a + b, 0) / priceChanges.length;
+  
+  const ema5 = candles.slice(-5).reduce((sum, c) => sum + c.close, 0) / 5;
+  const ema10 = candles.slice(-10).reduce((sum, c) => sum + c.close, 0) / 10;
+  const trend = ema5 - ema10;
+  
+  const forecast: number[] = [];
+  let currentPrice = lastPrice;
+  
+  for (let i = 0; i < forecastLength; i++) {
+    const trendFactor = trend * 0.3;
+    const momentumFactor = avgChange * 0.4;
+    const randomFactor = (Math.random() - 0.5) * (lastPrice * 0.001);
+    
+    currentPrice = currentPrice + trendFactor + momentumFactor + randomFactor;
+    forecast.push(currentPrice);
+  }
+  
+  return forecast;
+};
